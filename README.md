@@ -15,7 +15,7 @@ It comes as a command-line tool, a web API with a UI, and a GitHub Action that c
 ## Try it in two minutes
 
 ```bash
-git clone <this repo> && cd aftershock
+git clone https://github.com/nikhilfiction/aftershock && cd aftershock
 python3 -m venv venv && source venv/bin/activate      # Windows: venv\Scripts\activate
 pip install -r requirements.txt && pip install -e .
 pytest                                                  # 73 tests should pass
@@ -102,7 +102,7 @@ A repository can mix languages, for example a Python API and a TypeScript fronte
 | Command | What it does |
 | --- | --- |
 | `aftershock callers <repo> <name>` | Everything that depends on one function, class or route |
-| `aftershock diff [repo] [--base main]` | The aftershock radius of your git changes. `--base HEAD` (default) = uncommitted work; `main...HEAD` = what your branch changed |
+| `aftershock diff [repo] [--base main]` | The blast radius of your git changes. `--base HEAD` (default) = uncommitted work; `main...HEAD` = what your branch changed |
 | `aftershock trace [repo]` | Run the repo's tests with tracing (pytest, and Vitest, Jest, Mocha or `node --test` from package.json); writes `.aftershock-trace.json` |
 | `aftershock stats <repo>` | Counts of symbols and links, and how many were confirmed at runtime |
 | `aftershock symbols <repo> [--kind route]` | List everything the scanner found |
@@ -122,13 +122,7 @@ cd ui && npm install && npm run build && cd ..   # builds into aftershock/web
 aftershock serve                                # open http://localhost:8000
 ```
 
-The API lives under `/api` on the same address (interactive docs at http://localhost:8000/api/docs). If you start the server before building, the home page tells you the build command.
-
-To work on the UI itself, keep `aftershock serve` running and start Vite in a second terminal; it reloads as you edit and forwards `/api` to port 8000:
-
-```bash
-cd ui && npm run dev   # http://localhost:5173
-```
+The API lives under `/api` on the same address, with interactive docs at http://localhost:8000/api/docs.
 
 Add a repository (a GitHub https URL or a folder on your machine), scan a branch, then ask about a function, paste a diff, or compare against another branch like a pull request. The question goes into the address (`/snapshots/2?base=main` or `?fn=send_receipt`), so a report can be linked to.
 
@@ -147,22 +141,6 @@ The **dependency radar** puts the change in the middle and everything that depen
 <img src="docs/screenshots/phone-report.png" alt="The same pull request report on a phone: settings card, tiles, the will-break alert, the radar, routes, tests and the diff, with tabs at the bottom" width="300">
 
 On a phone the report becomes one column with tabs at the bottom for the radar, routes, tests and code.
-
-### A public demo
-
-Set `AFTERSHOCK_DEMO=true` and the server sets itself up on start: the two example apps become git repositories with a `main` and a `feature` branch (the feature branch deletes a function a route still calls), and both branches are scanned with their tests traced. Visitors can add public GitHub repositories too; those are read from the code only, because tracing runs a repository's code and stays limited to the built-in examples.
-
-To put it online for free on Render, click the button (or, in Render, choose New → Blueprint and pick this repository). Render builds the Dockerfile and uses the settings in `render.yaml`:
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/nikhilfiction/aftershock)
-
-On the free plan the site sleeps after 15 minutes without visits, takes about a minute to wake, and starts from scratch each time. Demo mode is built for that: the examples are scanned again within a minute of it waking.
-
-### Running the full stack with Docker
-
-```bash
-docker compose up --build      # web app and API + worker + PostgreSQL + Redis, at http://localhost:8000
-```
 
 ---
 
@@ -250,30 +228,6 @@ So 36 of 243 real calls (15%) would be missed by a tool that only reads code. Mo
 
 ---
 
-## Configuration (web app and API)
-
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `DATABASE_URL` | `sqlite:///./aftershock.db` | Or `postgresql+psycopg://user:pass@host/db` |
-| `REDIS_URL` | empty | Empty: scans run inside the API process. Set: scans go to a Redis queue and a separate worker (`python -m aftershock.api.jobs`) |
-| `DATA_DIR` | `./.aftershock-data` | Where repository clones live |
-| `ALLOW_LOCAL_PATHS` | `true` | Allow folders on the API's machine as repositories. Turn off on a shared server |
-| `ALLOW_TRACING` | `true` | Allow scans to run a repository's tests. This executes its code; turn off for code you don't trust |
-| `TRACE_TIMEOUT` | `900` | Seconds before a traced test run is stopped |
-| `MAX_REPO_FILES` | `20000` | Refuse repositories with more code files (Python, JS, TS) than this |
-| `AFTERSHOCK_TYPESCRIPT` | empty | Use this installed `typescript` package instead of the one in the cache folder |
-| `AFTERSHOCK_HOME` | `~/.cache/aftershock` | Where the TypeScript compiler is installed on first use |
-| `UI_DIR` | `aftershock/web` | The built web app to serve at `/`. Usually left alone |
-| `AFTERSHOCK_DEMO` | `false` | A public demo: set up and scan the example apps on start, keep them from being deleted, and trace only them |
-
-Graphs are cached in three layers: the API process's memory, then Redis (shared between processes, stored as JSON), then the database.
-
-Upgrading from an older version: the project used to be called Blast Radius. The command is now `aftershock`, and the first `aftershock serve` renames `blast_radius.db` and `.blast-radius-data` to `aftershock.db` and `.aftershock-data`, so earlier repositories and scans are kept. Environment variables that started with `BLAST_RADIUS_` now start with `AFTERSHOCK_`. The API now lives under `/api` (for example `/api/repos`), and the old `ui/.env` is no longer needed; delete it if it sets `VITE_API_URL=http://localhost:8000`. The API adds any new columns to your existing database when it starts. Scans made before an upgrade keep working; scan again to get what the newer scanner records, such as each route's method and path, or JavaScript and TypeScript files.
-
-Tracing a JavaScript project through the API installs its dependencies (`npm ci`, `pnpm`, `yarn` or `bun`, from its lockfile) in a temporary copy when it has no `node_modules`. That runs the project's install scripts, which is one more reason to keep `ALLOW_TRACING` for code you trust.
-
----
-
 ## Project layout
 
 ```
@@ -292,7 +246,7 @@ aftershock/
   render.py         text, Markdown and JSON reports
   github.py         pull request comments
   cli.py            the aftershock command
-  api/              FastAPI app, database models, scan worker, cache, demo mode
+  api/              FastAPI app, database models, scan worker, cache
   web/              the built web app (made by `npm run build` in ui/, not in git)
 ui/                 React + TypeScript web app
 examples/shop_api/  small Python app with one deliberately hidden dependency
@@ -304,10 +258,8 @@ tests/              73 Python tests (the UI has 48 more in ui/src/test)
 ## Tests
 
 ```bash
-(cd examples/shop_js && npm ci)            # lets the JS tracing tests run; they are skipped otherwise
-pytest                                     # everything, on SQLite
-TEST_DATABASE_URL=postgresql+psycopg://user@localhost/aftershock pytest tests/test_api.py
-cd ui && npm test && npm run typecheck && npm run build
+pytest                     # 73 Python tests
+cd ui && npm test          # 48 UI tests
 ```
 
 ## Known limits
@@ -317,5 +269,4 @@ cd ui && npm test && npm run typecheck && npm run build
 - A router's prefix set where it is mounted (`app.use("/api", router)`, `include_router(prefix=...)`) is not added to the route's path.
 - Tracing only sees code that the tests run. Python tracing needs the project's dependencies installed; JavaScript tracing installs them into its temporary copy when needed.
 - JavaScript runtime links have no line number: the runtime knows which function called, not from which line. A link that reading the code also found keeps the line from the code.
-- The database tables are created on startup. Schema changes after release would need migrations (Alembic).
 - Tracing executes the repository's code. Only enable it for repositories you trust.
