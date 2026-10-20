@@ -1,5 +1,5 @@
 # Copy this file to .github/workflows/aftershock.yml in your own repository.
-# Replace YOUR-GITHUB-USERNAME with the account that hosts aftershock.
+# Replace nikhilfiction with the account that hosts aftershock.
 name: Blast radius
 
 on:
@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: YOUR-GITHUB-USERNAME/aftershock@main
+      - uses: nikhilfiction/aftershock@main
         with:
           path: "."                                   # or "backend" in a monorepo
           fail-above: "80"                            # optional: block very risky PRs

@@ -2,6 +2,8 @@
 
 Change one function, and what else shakes? Aftershock shows the **blast radius** of a change in a **Python, JavaScript or TypeScript** codebase before you merge: every function and API route that depends on it, which tests to run, and a 0–100 risk score.
 
+**Live demo:** https://aftershock-iqny.onrender.com (free hosting: the first visit can take about a minute to wake up). Try a [TypeScript pull request report](https://aftershock-iqny.onrender.com/snapshots/4?base=main).
+
 It reads the code **and** watches it run. Reading the code finds most dependencies. Running the tests finds the ones reading misses, such as functions called by name from a dictionary, event listeners, framework callbacks, and methods on objects whose type is only known at runtime. Measured on this project's own code, **15% of real calls were invisible to reading the code alone** (see [Accuracy](#accuracy)).
 
 ![A pull request report: risk 79/100, a deleted function that is still called, and the affected API routes](docs/screenshots/pull-request-report.png)
@@ -152,7 +154,7 @@ Set `AFTERSHOCK_DEMO=true` and the server sets itself up on start: the two examp
 
 To put it online for free on Render, click the button (or, in Render, choose New → Blueprint and pick this repository). Render builds the Dockerfile and uses the settings in `render.yaml`:
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/YOUR-GITHUB-USERNAME/aftershock)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/nikhilfiction/aftershock)
 
 On the free plan the site sleeps after 15 minutes without visits, takes about a minute to wake, and starts from scratch each time. Demo mode is built for that: the examples are scanned again within a minute of it waking.
 
@@ -180,7 +182,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: YOUR-GITHUB-USERNAME/aftershock@main
+      - uses: nikhilfiction/aftershock@main
         with:
           fail-above: "80"                          # optional
           trace: "true"                             # optional, runs your tests
