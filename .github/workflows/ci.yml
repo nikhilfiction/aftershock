@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: aftershock
+          POSTGRES_PASSWORD: aftershock
+          POSTGRES_DB: aftershock
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U aftershock" --health-interval 3s --health-retries 20
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -r requirements.txt "psycopg[binary]>=3.2" && pip install -e .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: TypeScript compiler and the JS example's packages (for the JS/TS tests)
+        run: aftershock setup-js && (cd examples/shop_js && npm ci)
+      - name: Tests on SQLite
+        run: pytest -q
+      - name: API tests on PostgreSQL
+        env:
+          TEST_DATABASE_URL: postgresql+psycopg://aftershock:aftershock@localhost:5432/aftershock
+        run: pytest -q tests/test_api.py
+
+  ui:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - name: The build lands where the server looks for it
+        run: test -f ../aftershock/web/index.html

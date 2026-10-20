@@ -1,0 +1,15 @@
+{
+  "name": "shop-js",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --experimental-strip-types src/server.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,115 @@
+name: Aftershock
+description: Comment on each pull request with what the change affects - functions, API routes, tests to run - and a risk score.
+author: Nikhil
+branding:
+  icon: target
+  color: blue
+
+inputs:
+  path:
+    description: Folder to scan, relative to the repository root.
+    default: "."
+  depth:
+    description: How many steps away from a change to follow.
+    default: "3"
+  fail-above:
+    description: Fail the check when the risk score (0-100) is above this. Leave empty to never fail.
+    default: ""
+  trace:
+    description: Also run your tests with tracing to find hidden dependencies. This runs your test suite.
+    default: "false"
+  install:
+    description: Command that installs your project's own dependencies (needed when trace is true), e.g. "pip install -r requirements.txt" or "npm ci".
+    default: ""
+  python-version:
+    description: Python version to run with.
+    default: "3.12"
+  github-token:
+    description: Token used to comment on the pull request.
+    default: ${{ github.token }}
+
+outputs:
+  score:
+    description: The risk score, 0 to 100.
+    value: ${{ steps.report.outputs.score }}
+  level:
+    description: low, medium or high.
+    value: ${{ steps.report.outputs.level }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install aftershock
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+      run: pip install --quiet "$ACTION_PATH"
+
+    - name: Set up JavaScript/TypeScript reading
+      shell: bash
+      env:
+        SCAN_PATH: ${{ inputs.path }}
+      # GitHub's runners come with Node; this installs the TypeScript compiler the scanner uses
+      run: |
+        if [ -f "$SCAN_PATH/package.json" ] || [ -f "$SCAN_PATH/tsconfig.json" ]; then
+          aftershock setup-js
+        fi
+
+    - name: Install project dependencies
+      if: inputs.install != ''
+      shell: bash
+      env:
+        INSTALL: ${{ inputs.install }}
+      run: bash -c "$INSTALL"
+
+    - name: Run tests with tracing
+      if: inputs.trace == 'true'
+      shell: bash
+      env:
+        SCAN_PATH: ${{ inputs.path }}
+      run: |
+        aftershock trace "$SCAN_PATH" || echo "::warning::Tracing failed; the report uses static analysis only."
+
+    - name: Report on the pull request
+      id: report
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        BASE_REF: ${{ github.base_ref }}
+        SCAN_PATH: ${{ inputs.path }}
+        DEPTH: ${{ inputs.depth }}
+        FAIL_ABOVE: ${{ inputs.fail-above }}
+      run: |
+        if [ -z "$BASE_REF" ]; then
+          echo "::notice::Not a pull request; comparing with the previous commit."
+          BASE="HEAD~1"
+        else
+          # make sure the base branch exists locally, even with a shallow checkout
+          git fetch --no-tags --quiet origin "+refs/heads/$BASE_REF:refs/remotes/origin/$BASE_REF"
+          BASE="origin/$BASE_REF...HEAD"
+        fi
+
+        args=(diff "$SCAN_PATH" --base "$BASE" --depth "$DEPTH" --github)
+        if [ -f "$SCAN_PATH/.aftershock-trace.json" ]; then
+          args+=(--trace "$SCAN_PATH/.aftershock-trace.json")
+        fi
+
+        aftershock "${args[@]}" --format json > "$RUNNER_TEMP/aftershock.json"
+        python - <<'PY' >> "$GITHUB_OUTPUT"
+        import json, os
+        risk = json.load(open(os.path.join(os.environ["RUNNER_TEMP"], "aftershock.json")))["risk"]
+        print(f"score={risk['score']}")
+        print(f"level={risk['level']}")
+        PY
+
+        if [ -n "$FAIL_ABOVE" ]; then
+          score=$(python -c "import json,os; print(json.load(open(os.path.join(os.environ['RUNNER_TEMP'], 'aftershock.json')))['risk']['score'])")
+          if [ "$score" -gt "$FAIL_ABOVE" ]; then
+            echo "::error::Blast radius risk $score is above the limit of $FAIL_ABOVE."
+            exit 1
+          fi
+        fi

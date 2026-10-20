@@ -1,0 +1,56 @@
+# Full stack: web app and API + background worker + PostgreSQL + Redis
+#   docker compose up --build
+#   then open http://localhost:8000 (API docs at http://localhost:8000/api/docs)
+
+x-app-env: &app-env
+  DATABASE_URL: postgresql+psycopg://aftershock:aftershock@postgres:5432/aftershock
+  REDIS_URL: redis://redis:6379/0
+  DATA_DIR: /data
+  ALLOW_LOCAL_PATHS: "false"     # inside Docker, only https git URLs make sense
+  ALLOW_TRACING: "false"         # tracing runs the scanned repo's tests: turn on only for repos you trust
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: aftershock
+      POSTGRES_PASSWORD: aftershock
+      POSTGRES_DB: aftershock
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aftershock"]
+      interval: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+
+  api:
+    build: .
+    environment: *app-env
+    ports:
+      - "8000:8000"
+    volumes:
+      - repodata:/data           # shared with the worker: clones live here
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  worker:
+    build: .
+    command: ["python", "-m", "aftershock.api.jobs"]
+    environment: *app-env
+    volumes:
+      - repodata:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+volumes:
+  pgdata:
+  repodata:

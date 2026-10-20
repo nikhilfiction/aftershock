@@ -1,0 +1,43 @@
+{
+  "name": "aftershock-ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc -b --noEmit",
+    "lint": "oxlint src",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "preview": "vite preview",
+    "gen:api": "npx -y openapi-typescript@7 ${AFTERSHOCK_API:-http://localhost:8000}/api/openapi.json -o src/api/schema.d.ts"
+  },
+  "dependencies": {
+    "@dagrejs/dagre": "^3.1.1",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@fontsource/ibm-plex-sans": "^5.3.0",
+    "@tanstack/react-query": "^5.104.4",
+    "@xyflow/react": "^12.12.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router": "^8.4.0"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "jsdom": "^29.1.1",
+    "msw": "^3.0.3",
+    "oxlint": "^1.81.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.5"
+  }
+}

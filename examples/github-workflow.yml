@@ -1,0 +1,24 @@
+# Copy this file to .github/workflows/aftershock.yml in your own repository.
+# Replace YOUR-GITHUB-USERNAME with the account that hosts aftershock.
+name: Blast radius
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: YOUR-GITHUB-USERNAME/aftershock@main
+        with:
+          path: "."                                   # or "backend" in a monorepo
+          fail-above: "80"                            # optional: block very risky PRs
+          trace: "true"                               # optional: find hidden dependencies
+          install: pip install -r requirements.txt    # your project's own dependencies (JS/TS: npm ci)

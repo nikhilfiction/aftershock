@@ -1,0 +1,88 @@
+/*
+ * Design tokens: every colour, size and font the app uses.
+ * One dark palette, one sans (IBM Plex Sans) and one mono (JetBrains Mono).
+ * Each colour means one thing everywhere:
+ *   blue    = the change itself, and the main actions
+ *   grey    = code that depends on it
+ *   purple  = found only by running the tests
+ *   sky     = API routes
+ *   red     = deleted / will break
+ *   green, orange, red = low, medium, high risk
+ */
+:root {
+  color-scheme: dark;
+
+  /* surfaces, darkest to lightest */
+  --bg: #0f131b;
+  --bg-well: #0a0e15;
+  --bg-panel: #181c23;
+  --bg-mid: #1c2027;
+  --bg-raised: #262a32;
+  --bg-top: #31353d;
+  --bg-hover: #353941;
+
+  /* text */
+  --text: #dfe2ec;
+  --text-soft: #c2c6d6;
+  --text-faint: #8c909f;
+  --line: #424754;
+  --line-soft: rgba(66, 71, 84, 0.3);
+  --line-faint: rgba(66, 71, 84, 0.15);
+  --ring: #222734;
+
+  /* blue: the change, and primary actions */
+  --primary: #adc6ff;
+  --primary-light: #d8e2ff;
+  --primary-strong: #4d8eff;
+  --primary-deep: #3b82f6;
+  --on-primary: #002e6a;
+  --primary-hover: #c2d4ff;
+
+  /* meanings */
+  --route: #38bdf8;
+  --route-strong: #0284c7;
+  --route-bg: #082333;
+  --route-text: #e0f2fe;
+  --hidden: #c084fc;
+  --hidden-strong: #a855f7;
+  --hidden-light: #d8b4fe;
+  --hidden-bg: #1a1424;
+  --hidden-chip: #2a1840;
+  --broken: #ffb4ab;
+  --broken-strong: #ff544a;
+  --broken-bg: #201214;
+  --broken-text: #ffdad6;
+  --add: #2dd4bf;
+  --add-bg: #0b1a17;
+
+  /* risk levels */
+  --low: #34d399;
+  --medium: #ffb77d;
+  --high: #ffb4ab;
+
+  /* type */
+  --font-sans: "IBM Plex Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --t-xs: 11px;  /* labels, mono, uppercase */
+  --t-sm: 12px;  /* code */
+  --t-md: 13px;
+  --t-base: 14px;
+  --t-h3: 16px;
+  --t-h2: 20px;
+  --t-h1: 24px;
+  --t-hero: 30px;
+  --track: 0.06em;
+
+  /* shape and space */
+  --r: 2px;
+  --r-avatar: 12px;
+  --gap-xs: 4px;
+  --gap-sm: 6px;
+  --gap: 8px;
+  --gap-md: 12px;
+  --gap-lg: 16px;
+  --gap-xl: 24px;
+  --gap-2xl: 32px;
+
+  --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--primary);
+}

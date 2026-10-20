@@ -1,0 +1,11 @@
+venv
+.venv
+**/__pycache__
+.pytest_cache
+*.db
+.aftershock-data
+**/node_modules
+ui/dist
+aftershock/web
+ui/.env
+.git
