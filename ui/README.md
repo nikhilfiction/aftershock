@@ -13,7 +13,7 @@ The app calls the API at `/api` on its own address, so it needs no settings. Sta
 
 | Script | |
 | --- | --- |
-| `npm test` | 47 tests (Vitest + Testing Library, API faked with MSW) |
+| `npm test` | 48 tests (Vitest + Testing Library, API faked with MSW) |
 | `npm run typecheck` | TypeScript |
 | `npm run lint` | oxlint |
 | `npm run build` | production build into `../aftershock/web`, served by `aftershock serve` |

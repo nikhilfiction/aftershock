@@ -16,15 +16,19 @@ WORKDIR /app
 COPY pyproject.toml requirements.txt ./
 COPY aftershock ./aftershock
 COPY --from=ui /app/aftershock/web ./aftershock/web
+# the example apps, which demo mode (AFTERSHOCK_DEMO=true) scans on startup
+COPY examples ./examples
 RUN pip install --no-cache-dir -r requirements.txt "psycopg[binary]>=3.2" && pip install --no-cache-dir -e .
 
 # the TypeScript compiler the JS/TS scanner uses, installed now instead of on the first scan
 ENV AFTERSHOCK_HOME=/opt/aftershock
 RUN aftershock setup-js
 
-# run as a normal user, not root
+# run as a normal user, not root; everything the app writes goes to /data
 RUN useradd --create-home aftershock && mkdir -p /data && chown aftershock /data
 USER aftershock
+ENV DATA_DIR=/data DATABASE_URL=sqlite:////data/aftershock.db
 
+# hosting platforms such as Render say which port to use in $PORT
 EXPOSE 8000
-CMD ["aftershock", "serve", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "exec aftershock serve --host 0.0.0.0 --port ${PORT:-8000}"]

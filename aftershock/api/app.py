@@ -5,6 +5,8 @@
     then open http://localhost:8000 (the app) or http://localhost:8000/api/docs (the API)
 """
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -15,6 +17,15 @@ from aftershock.api.settings import Settings
 from aftershock.api.web import mount_ui
 
 API = "/api"
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    settings = app.state.settings
+    if settings.demo:
+        from aftershock.api.demo import seed_demo
+        seed_demo(app.state.session_factory, settings, app.state.redis)
+    yield
 
 
 def create_app(settings: Settings | None = None, redis_client=None) -> FastAPI:
@@ -28,7 +39,8 @@ def create_app(settings: Settings | None = None, redis_client=None) -> FastAPI:
     app = FastAPI(
         title="Aftershock API",
         version="1.0.0",
-        description="Scan a Python repo once, then ask what a change would affect.",
+        description="Scan a Python, JavaScript or TypeScript repo once, then ask what a change would affect.",
+        lifespan=lifespan,
         docs_url=f"{API}/docs",
         redoc_url=f"{API}/redoc",
         openapi_url=f"{API}/openapi.json",
@@ -49,7 +61,7 @@ def create_app(settings: Settings | None = None, redis_client=None) -> FastAPI:
 
     @app.get(f"{API}/health", tags=["meta"])
     def health():
-        return {"ok": True, "version": app.version,
+        return {"ok": True, "version": app.version, "demo": settings.demo,
                 "queue": "redis" if redis_client is not None else "in-process",
                 "database": "postgresql" if settings.database_url.startswith("postgresql") else "sqlite",
                 "cache_hits": app.state.cache.hits}

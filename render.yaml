@@ -1,0 +1,19 @@
+# Render Blueprint: a public demo of Aftershock on Render's free plan.
+# Render builds the Dockerfile; the demo sets up and scans the example apps on every start.
+services:
+  - type: web
+    name: aftershock
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: AFTERSHOCK_DEMO
+        value: "true"
+      # visitors may add public GitHub repositories, but not folders on the server,
+      # and only the built-in examples get their tests run
+      - key: ALLOW_LOCAL_PATHS
+        value: "false"
+      - key: ALLOW_TRACING
+        value: "false"
+      - key: MAX_REPO_FILES
+        value: "3000"

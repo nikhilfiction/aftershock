@@ -375,3 +375,32 @@ def test_files_from_the_old_name_are_kept(tmp_path, monkeypatch):
     carry_over_old_files()
     assert (tmp_path / "aftershock.db").read_text() == "db"
     assert (tmp_path / ".aftershock-data").is_dir() and not (tmp_path / ".blast-radius-data").exists()
+
+
+def test_demo_sets_up_and_scans_the_examples(tmp_path):
+    from aftershock.api.demo import seed_demo
+
+    settings = Settings(database_url=f"sqlite:///{tmp_path}/demo.db", redis_url="", data_dir=tmp_path / "data",
+                        demo=True, allow_local_paths=False, allow_tracing=False)
+    app = create_app(settings)
+    ids = seed_demo(app.state.session_factory, settings, wait=True)
+    assert len(ids) == 4                                   # two examples, two branches each
+    assert seed_demo(app.state.session_factory, settings) == []     # only into an empty database
+    client = api_client(app)
+
+    assert client.get("/health").json()["demo"] is True
+    repos = {r["name"]: r for r in client.get("/repos").json()}
+    assert set(repos) == {"shop-api", "shop-js"}
+    api = {s["ref"]: s for s in repos["shop-api"]["snapshots"]}
+    # the examples' tests run even though tracing is off for everything else
+    assert api["main"]["status"] == "ready" and api["main"]["has_dynamic"], api["main"]
+    assert {s["status"] for s in repos["shop-js"]["snapshots"]} == {"ready"}
+
+    report = client.post(f"/snapshots/{api['feature']['id']}/blast-radius", json={"base": "main"}).json()["report"]
+    assert report["deleted"][0]["name"] == "app.services.orders.list_orders"
+    assert report["risk"]["level"] == "high"
+
+    assert client.delete(f"/repos/{repos['shop-api']['id']}").status_code == 403
+    # a visitor's own repository is read from the code only
+    mine = client.post("/repos", json={"url": str(tmp_path)}).status_code
+    assert mine == 422                                     # folders on the server are not allowed

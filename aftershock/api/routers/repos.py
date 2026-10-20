@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -46,7 +46,12 @@ def repo_detail(repo: Repository = Depends(get_repo)):
 
 
 @router.delete("/{repo_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_repo(repo: Repository = Depends(get_repo), db: Session = Depends(get_db)):
+def delete_repo(repo: Repository = Depends(get_repo), db: Session = Depends(get_db),
+                settings: Settings = Depends(get_settings)):
+    from aftershock.api.demo import is_demo_repo
+
+    if is_demo_repo(repo, settings):
+        raise HTTPException(403, "The demo's example repositories can't be deleted")
     db.delete(repo)
     db.commit()
 

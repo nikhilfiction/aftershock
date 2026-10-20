@@ -20,7 +20,9 @@ from aftershock.tracing import trace_edges
 def run_trace(db: Session, snap: Snapshot, scan_root: Path, settings: Settings) -> None:
     """Never fails the scan: if tracing goes wrong, the static graph is still
     saved and the reason is shown in snapshot.error."""
-    if not settings.allow_tracing:
+    from aftershock.api.demo import is_demo_repo
+
+    if not settings.allow_tracing and not is_demo_repo(snap.repository, settings):
         snap.error = "Tracing is turned off on this server (ALLOW_TRACING=false); static results only."
         return
 

@@ -31,6 +31,7 @@ export type Health = {
   version?: string;
   queue: "redis" | "in-process";
   database?: "sqlite" | "postgresql";
+  demo?: boolean;      // a public demo: the example repos are set up and scanned on every start
 };
 
 export type SnapshotStatus = "queued" | "scanning" | "tracing" | "ready" | "failed";

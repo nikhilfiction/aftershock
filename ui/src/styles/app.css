@@ -1917,3 +1917,9 @@ input[type="checkbox"] {
 .delete-strip > .notice {
   flex-basis: 100%;
 }
+
+/* the public demo's note under the page intro */
+.demo-note {
+  margin-top: 16px;
+  max-width: 760px;
+}

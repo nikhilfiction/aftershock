@@ -16,7 +16,7 @@ It comes as a command-line tool, a web API with a UI, and a GitHub Action that c
 git clone <this repo> && cd aftershock
 python3 -m venv venv && source venv/bin/activate      # Windows: venv\Scripts\activate
 pip install -r requirements.txt && pip install -e .
-pytest                                                  # 71 tests should pass
+pytest                                                  # 73 tests should pass
 ```
 
 JavaScript and TypeScript also need Node.js 18 or newer. The first JS/TS scan installs the TypeScript compiler into `~/.cache/aftershock` (or run `aftershock setup-js` to do it now).
@@ -146,6 +146,16 @@ The **dependency radar** puts the change in the middle and everything that depen
 
 On a phone the report becomes one column with tabs at the bottom for the radar, routes, tests and code.
 
+### A public demo
+
+Set `AFTERSHOCK_DEMO=true` and the server sets itself up on start: the two example apps become git repositories with a `main` and a `feature` branch (the feature branch deletes a function a route still calls), and both branches are scanned with their tests traced. Visitors can add public GitHub repositories too; those are read from the code only, because tracing runs a repository's code and stays limited to the built-in examples.
+
+To put it online for free on Render, click the button (or, in Render, choose New → Blueprint and pick this repository). Render builds the Dockerfile and uses the settings in `render.yaml`:
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/YOUR-GITHUB-USERNAME/aftershock)
+
+On the free plan the site sleeps after 15 minutes without visits, takes about a minute to wake, and starts from scratch each time. Demo mode is built for that: the examples are scanned again within a minute of it waking.
+
 ### Running the full stack with Docker
 
 ```bash
@@ -252,6 +262,7 @@ So 36 of 243 real calls (15%) would be missed by a tool that only reads code. Mo
 | `AFTERSHOCK_TYPESCRIPT` | empty | Use this installed `typescript` package instead of the one in the cache folder |
 | `AFTERSHOCK_HOME` | `~/.cache/aftershock` | Where the TypeScript compiler is installed on first use |
 | `UI_DIR` | `aftershock/web` | The built web app to serve at `/`. Usually left alone |
+| `AFTERSHOCK_DEMO` | `false` | A public demo: set up and scan the example apps on start, keep them from being deleted, and trace only them |
 
 Graphs are cached in three layers: the API process's memory, then Redis (shared between processes, stored as JSON), then the database.
 
@@ -279,13 +290,13 @@ aftershock/
   render.py         text, Markdown and JSON reports
   github.py         pull request comments
   cli.py            the aftershock command
-  api/              FastAPI app, database models, scan worker, cache
+  api/              FastAPI app, database models, scan worker, cache, demo mode
   web/              the built web app (made by `npm run build` in ui/, not in git)
 ui/                 React + TypeScript web app
 examples/shop_api/  small Python app with one deliberately hidden dependency
 examples/shop_js/   the same app in TypeScript with Express and Vitest
 action.yml          the GitHub Action
-tests/              71 Python tests (the UI has 47 more in ui/src/test)
+tests/              73 Python tests (the UI has 48 more in ui/src/test)
 ```
 
 ## Tests

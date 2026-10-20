@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router";
 
 import { ApiError } from "../api/client";
-import { useCreateRepo, useRepos, useStartScan, useStats } from "../api/hooks";
+import { useCreateRepo, useHealth, useRepos, useStartScan, useStats } from "../api/hooks";
 import type { RepoDetail } from "../api/types";
 import { WORKING } from "../api/types";
 import { Icon } from "../components/Icon";
@@ -247,6 +247,21 @@ const CAPABILITIES = [
   },
 ];
 
+/** On the public demo: what is there, and what a visitor can do. */
+function DemoNote() {
+  const health = useHealth();
+  if (!health.data?.demo) return null;
+  return (
+    <p className="notice info demo-note" role="note">
+      <span>
+        This is a live demo: shop-api (Python) and shop-js (TypeScript) are scanned on both branches, with their tests
+        traced. Open one and compare its feature branch with main, or add any public GitHub repository, which is read
+        from the code only. The demo resets when the server restarts.
+      </span>
+    </p>
+  );
+}
+
 export default function ReposPage() {
   const { data, isPending, isError, error, refetch } = useRepos();
   const scans = data?.reduce((n, r) => n + r.snapshots.length, 0) ?? 0;
@@ -267,6 +282,7 @@ export default function ReposPage() {
               Scan a Python, JavaScript or TypeScript codebase once, then ask what any change would affect: the functions
               that depend on it, the API routes that run it, and the tests worth running.
             </p>
+            <DemoNote />
           </div>
           {data && (
             <div className="hub-stats mono">

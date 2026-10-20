@@ -16,6 +16,18 @@ describe("Repositories page", () => {
     expect(await screen.findByRole("link", { name: "shop_api" })).toHaveAttribute("href", "/repos/1");
   });
 
+  it("explains the public demo only on the demo", async () => {
+    open();
+    await screen.findByRole("link", { name: "shop_api" });
+    expect(screen.queryByRole("note")).not.toBeInTheDocument();
+
+    server.use(
+      http.get(`${API}/health`, () => HttpResponse.json({ ok: true, queue: "in-process", demo: true })),
+    );
+    open();
+    expect(await screen.findByRole("note")).toHaveTextContent(/This is a live demo/);
+  });
+
   it("shows each repository's scans and can scan it again", async () => {
     let body: unknown;
     server.use(
